@@ -143,10 +143,11 @@ Alternatively, retrieve your public IP address using the AWS metadata service:
 TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` && curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/public-ipv4
 ```
 ### Phase 2: Connecting to Your EC2 instance
+---
 Configure inbound rules to allow SSH connection
 ![image](./images/security-group-set-up.png)
 
-Connect to the EC@ instace
+Connect to the EC2 instace
 ```bash
  ssh -i "<your-key.pem>" ubuntu@ec2-3-144-194-207.us-east-2.compute.amazonaws.com
 ```
@@ -158,24 +159,18 @@ Successful connection is indicated by the Ubuntu command prompt.
 ![ec2-success](./images/ec2-instance.png)
 ---
 
-
 ### Phase 3: System Update and Maintenance
 Update your system packages to ensure security and stability:
 ```bash
-sudo apt update && sudo apt upgrade -y
+sudo apt update 
 ```
-
+![image](./images/update-ubuntu-server.png)
 ---
 
 ### Phase 4: Apache Web Server Installation
 Install the Apache HTTP server:
 ```bash
 sudo apt install apache2 -y
-```
-Configure Apache to start automatically and launch the service:
-```bash
-sudo systemctl enable apache2
-sudo systemctl start apache2
 ```
 ---
 Verify Apache is running correctly with status verification:
@@ -184,11 +179,11 @@ sudo systemctl status apache2
 ```
 A green "active" status confirms successful installation.
 ---
-![apache-success](./images/2g.PNG)
+![apache-success](./images/apache-cli-status.png)
 ---
 Test web server functionality by accessing `http://<EC2_PUBLIC_IP>` in your browser.
 ---
-![apache-webpage](./images/2oo.PNG)
+![apache-webpage](./images/apache-default-page.png)
 ---
 Alternative testing methods using command-line tools:
 ```bash
@@ -199,7 +194,7 @@ or
 curl http://127.0.0.1:80
 ```
 ---
-![apache-webpage](./images/2gg.PNG)
+![apache-webpage](./images/apache-curl.png)
 ---
 
 ### Phase 5: MySQL Database Server Setup
@@ -212,45 +207,12 @@ Confirm MySQL service status:
 sudo systemctl status mysql
 ```
 ---
-![mysql-status](./images/4a.PNG)
+![mysql-status](./images/MySQL-installation.png)
 ---
 Access the MySQL console for initial configuration:
 ```bash
 sudo mysql
 ```
-You'll see the MySQL prompt indicating successful connection.
----
-![mysql](./images/3a.PNG)
----
-Configure the root user password with enhanced security:
-```bash
-ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'PassWord.1'; 
-```
-Exit the MySQL session:
-```bash
-exit
-```
-Execute the security configuration script:
-```bash
-sudo mysql_secure_installation
-```
-The script will prompt you to configure password validation policies. Select 'y' to enable and choose your preferred security level.
----
-![mysql](./images/3b.PNG)
----
-![mysql-validate-password](./images/4.PNG)
----
-Verify password-based authentication:
-```bash
-sudo mysql -p
-```
-Note: The -p flag prompts for the password you just configured.
-Exit MySQL when finished:
-```bash
-exit
-```
-
----
 
 ### Phase 6: PHP Installation and Configuration
 Install PHP along with necessary Apache and MySQL extensions:
@@ -261,7 +223,7 @@ Verify the PHP installation:
 ```bash
 php -v
 ```
-![mysql](./images/4b.PNG)
+![mysql](./images/php-version.png)
 ---
 
 ### Phase 7: Apache Virtual Host Configuration
@@ -309,8 +271,6 @@ Apply the configuration changes:
 sudo systemctl reload apache2
 ```
 
-Note: Lines in configuration files can be commented out using '#' at the beginning.
-
 ### Phase 8: PHP Functionality Testing
 Create a test file in your web root directory:
 ```bash
@@ -321,6 +281,7 @@ Access your website at:
 ```
 http://<EC2_PUBLIC_IP>:80
 ```
+![image](./images/website-on-ec2.png)
 
 If you see your echo message, your Apache virtual host is functioning properly. Note that index.html takes precedence over other files due to default DirectoryIndex settings.
 
@@ -343,70 +304,8 @@ Save your changes and reload Apache:
 ```bash
 sudo systemctl reload apache2
 ```
-
-##### Create a PHP information page:
-```bash
-vim /var/www/projectlamp/index.php
-```
-Add this PHP code to display system information:
-```php
-<?php
-phpinfo();
-?>
-```
-This will display comprehensive PHP configuration details.
-![mysql](./images/4e.PNG)
 ---
 
-### Phase 10: Firewall Configuration (Optional)
-If using UFW (Uncomplicated Firewall), configure appropriate rules:
-```bash
-sudo ufw allow OpenSSH
-sudo ufw allow 'Apache Full'
-sudo ufw enable
-```
-
----
-
-### Phase 11: Database Connectivity Testing
-Create a PHP script to test MySQL connectivity:
-```bash
-sudo nano /var/www/projectlamp/db_test.php
-```
-Add the following connection test code:
-```php
-<?php
-$servername = "localhost";
-$username = "root";
-$password = "your_mysql_password";
-
-// Establish database connection
-$conn = new mysqli($servername, $username, $password);
-
-// Verify connection status
-if ($conn->connect_error) {
-  die("Connection failed: " . $conn->connect_error);
-}
-echo "Database connection successful";
-?>
-```
-Test the connection by visiting:
-```
-http://<EC2_PUBLIC_IP>/db_test.php
-```
-
----
-
-## Common Issues and Solutions
-| Problem | Resolution |
-|---------|------------|
-| Apache fails to start | Execute `sudo journalctl -xe` to examine system logs |
-| PHP files download instead of executing | Verify `libapache2-mod-php` installation |
-| MySQL authentication errors | Re-execute `mysql_secure_installation` |
-| Port 80 inaccessible | Review AWS security group configurations |
-| UFW blocking connections | Configure UFW to allow Apache traffic |
-
----
 
 ## Resource Cleanup
 When you no longer require the LAMP stack:
@@ -428,7 +327,7 @@ Type `yes` when prompted to confirm destruction.
 ---
 
 ## System Architecture Overview
-![LAMP AWS Architecture](lamp_stack_architecture.png)
+![LAMP AWS Architecture](./LAMP%20stack%20Architecture.png)
 
 ---
 **Documentation Complete**
