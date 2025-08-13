@@ -20,4 +20,4 @@ Let's Connect:
 
 LinkedIn: [Nsikakobong Ubom](https://www.linkedin.com/in/nsikak-ubom)
 
-Email: [Gmail](ubomns@gmail.com)
+Email: [Gmail](mailto:ubomns@gmail.com)
