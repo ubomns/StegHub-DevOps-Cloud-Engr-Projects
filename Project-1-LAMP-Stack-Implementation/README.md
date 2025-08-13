@@ -284,7 +284,7 @@ http://<EC2_PUBLIC_IP>:80
 ![image](./images/website-on-ec2.png)
 
 If you see your echo message, your Apache virtual host is functioning properly. Note that index.html takes precedence over other files due to default DirectoryIndex settings.
----
+
 
 ## Resource Cleanup
 When you no longer require the LAMP stack:
