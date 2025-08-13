@@ -202,17 +202,17 @@ Install the MySQL database server:
 ```bash
 sudo apt install mysql-server -y
 ```
+![mysql-status](./images/MySQL-installation.png)
 Confirm MySQL service status:
 ```bash
 sudo systemctl status mysql
 ```
 ---
-![mysql-status](./images/MySQL-installation.png)
----
 Access the MySQL console for initial configuration:
 ```bash
 sudo mysql
 ```
+![image](./images/mysql-config.png)
 
 ### Phase 6: PHP Installation and Configuration
 Install PHP along with necessary Apache and MySQL extensions:
@@ -284,28 +284,7 @@ http://<EC2_PUBLIC_IP>:80
 ![image](./images/website-on-ec2.png)
 
 If you see your echo message, your Apache virtual host is functioning properly. Note that index.html takes precedence over other files due to default DirectoryIndex settings.
-
 ---
-
-### Phase 9: PHP Processing Configuration
-Modify the DirectoryIndex order to prioritize PHP files:
-```bash
-sudo vim /etc/apache2/mods-enabled/dir.conf
-```
-Change the existing line from:
-```apache
-DirectoryIndex index.html index.cgi index.pl index.php index.xhtml index.htm
-```
-To:
-```apache
-DirectoryIndex index.php index.html index.cgi index.pl index.xhtml index.htm
-```
-Save your changes and reload Apache:
-```bash
-sudo systemctl reload apache2
-```
----
-
 
 ## Resource Cleanup
 When you no longer require the LAMP stack:
