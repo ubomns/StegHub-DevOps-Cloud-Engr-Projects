@@ -66,153 +66,46 @@ cd lamp-stack-terraform
 
 Create the main Terraform configuration file `main.tf`:
 ```hcl
-# Configure AWS Provider
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-  required_version = ">= 1.0"
-}
-
-# Configure AWS Provider Region
+# Simple EC2 instance with Terraform
 provider "aws" {
-  region = var.aws_region
+  region = "us-east-2"
 }
 
-# Create Security Group
-resource "aws_security_group" "lamp_sg" {
-  name        = "lamp-stack-sg"
-  description = "Security group for LAMP stack"
+# Generate a private key
+resource "tls_private_key" "my_key" {
+  algorithm = "RSA"
+  rsa_bits  = 2048
+}
 
-  # SSH access
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+# Create a key pair in AWS
+resource "aws_key_pair" "my_key" {
+  key_name   = "my-terraform-key"
+  public_key = tls_private_key.my_key.public_key_openssh
+}
 
-  # HTTP access
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+# Save private key to a file
+resource "local_file" "private_key" {
+  filename        = "nsikak-key.pem"
+  content         = tls_private_key.my_key.private_key_pem
+  file_permission = "0600"
+}
 
-  # HTTPS access
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  # Outbound rules
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+# Create an EC2 instance
+resource "aws_instance" "my_server" {
+  ami           = "ami-0d1b5a8c13042c939" # Ubuntu 24.04 LTS
+  instance_type = "t3.micro"
+  key_name      = aws_key_pair.my_key.key_name
 
   tags = {
-    Name = "lamp-stack-sg"
+    Name = "my-ubuntu-server"
   }
 }
 
-# Create Key Pair (if not exists)
-resource "aws_key_pair" "lamp_kp" {
-  key_name   = var.key_name
-  public_key = file(var.public_key_path)
+# Output the public IP
+output "public_ip" {
+  value = aws_instance.my_server.public_ip
 }
 
-# Launch EC2 Instance
-resource "aws_instance" "lamp_server" {
-  ami                    = var.ami_id
-  instance_type         = var.instance_type
-  key_name              = aws_key_pair.lamp_kp.key_name
-  vpc_security_group_ids = [aws_security_group.lamp_sg.id]
-
-  tags = {
-    Name = "LAMP-Stack-Server"
-  }
-
-  # Enable detailed monitoring
-  monitoring = true
-
-  # Root block device
-  root_block_device {
-    volume_type = "gp3"
-    volume_size = var.root_volume_size
-    encrypted   = true
-  }
-}
-```
-
-Create a variables file `variables.tf`:
-```hcl
-variable "aws_region" {
-  description = "AWS region"
-  type        = string
-  default     = "us-east-1"
-}
-
-variable "ami_id" {
-  description = "AMI ID for Ubuntu 22.04 LTS"
-  type        = string
-  default     = "ami-0c7217cdde317cfec"  # Ubuntu 22.04 LTS in us-east-1
-}
-
-variable "instance_type" {
-  description = "EC2 instance type"
-  type        = string
-  default     = "t2.micro"
-}
-
-variable "key_name" {
-  description = "Name of the AWS key pair"
-  type        = string
-  default     = "lamp-stack-kp"
-}
-
-variable "public_key_path" {
-  description = "Path to the public key file"
-  type        = string
-  default     = "~/.ssh/id_rsa.pub"
-}
-
-variable "root_volume_size" {
-  description = "Size of the root EBS volume in GB"
-  type        = number
-  default     = 20
-}
-```
-
-Create an outputs file `outputs.tf`:
-```hcl
-output "instance_id" {
-  description = "EC2 instance ID"
-  value       = aws_instance.lamp_server.id
-}
-
-output "instance_public_ip" {
-  description = "Public IP address of the EC2 instance"
-  value       = aws_instance.lamp_server.public_ip
-}
-
-output "instance_public_dns" {
-  description = "Public DNS name of the EC2 instance"
-  value       = aws_instance.lamp_server.public_dns
-}
-
-output "security_group_id" {
-  description = "Security Group ID"
-  value       = aws_security_group.lamp_sg.id
-}
 ```
 
 #### Deploy the Infrastructure
@@ -220,17 +113,22 @@ output "security_group_id" {
 ```bash
 terraform init
 ```
+![image](./images/terraform-init.png)
 
 2. Review the planned changes:
 ```bash
-terraform plan
+terraform plan -out=plan.tfplan
 ```
+The -out flag is used with terraform plan to save the execution plan to a file
+
+![image](./images/terraform-plan-1.png)
 
 3. Apply the configuration to create resources:
 ```bash
-terraform apply
+terraform apply -auto-approve plan.tfplan
 ```
-Type `yes` when prompted to confirm.
+The -auto-approve flag is used with terraform apply to skip the interactive approval prompt.
+![image](./images/terraform-apply.png)
 
 4. Once deployment completes, note the output values including your instance's public IP address.
 
@@ -238,26 +136,28 @@ Type `yes` when prompted to confirm.
 ```bash
 terraform output instance_public_ip
 ```
+![image](./images/public-ip-address.png)
 ---
 Alternatively, retrieve your public IP address using the AWS metadata service:
 ```bash
 TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` && curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/public-ipv4
 ```
+### Phase 2: Connecting to Your EC2 instance
+Configure inbound rules to allow SSH connection
+![image](./images/security-group-set-up.png)
 
-### Phase 2: Establishing SSH Connection
-Navigate to your SSH key directory and configure proper permissions for your private key:
+Connect to the EC@ instace
 ```bash
-chmod 400 ~/.ssh/lamp-stack-key  # or whatever you named your private key
-ssh -i ~/.ssh/lamp-stack-key ubuntu@$(terraform output -raw instance_public_ip)
+ ssh -i "<your-key.pem>" ubuntu@ec2-3-144-194-207.us-east-2.compute.amazonaws.com
 ```
-Accept the host key verification by typing `yes`.
----
-![ec2-success](./images/2b.PNG)
----
 Successful connection is indicated by the Ubuntu command prompt.
 ---
-![ssh-success](./images/2c.PNG)
+![ssh-success](./images/ssh-to-ec2-instace.png)
 ---
+---
+![ec2-success](./images/ec2-instance.png)
+---
+
 
 ### Phase 3: System Update and Maintenance
 Update your system packages to ensure security and stability:
