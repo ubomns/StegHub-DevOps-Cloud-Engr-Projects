@@ -12,7 +12,7 @@ This repository serves as a comprehensive resource for DevOps enthusiasts at eve
 
 ### Repository Structure & Project Showcase
 
-- **Project 1: [Complete LAMP Stack deployment on AWS](https://github.com/ubomns/StegHub-DevOps-Cloud-Engr-Projects)**  - Detailed walkthrough of implementation, technical challenges overcome, tools utilized, and valuable insights gained.
+- **Project 1: [Complete LAMP Stack deployment on AWS](https://github.com/ubomns/StegHub-DevOps-Cloud-Engr-Projects/tree/main/Project-1-LAMP-Stack-Implementation)**  - Detailed walkthrough of implementation, technical challenges overcome, tools utilized, and valuable insights gained.
 
 This repository evolves continuously as I advance through my DevOps specialization. Each documented project represents measurable progress in mastering cloud platforms, automation frameworks, and modern infrastructure practices.
 
